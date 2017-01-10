@@ -111,8 +111,8 @@ func (qw *qwiklabsWriter) write(nodes ...types.Node) error {
 			qw.write(n.Content.Nodes...)
 		case *types.ItemsListNode:
 			qw.itemsList(n)
-		//case *types.GridNode:
-		//	qw.grid(n)
+		case *types.GridNode:
+			qw.grid(n)
 		case *types.InfoboxNode:
 			qw.infobox(n)
 		//case *types.SurveyNode:
@@ -228,6 +228,19 @@ func (qw *qwiklabsWriter) itemsList(n *types.ItemsListNode) {
 		}
 	}
 }
+
+func (qw *qwiklabsWriter) grid(n *types.GridNode) {
+	qw.newBlock()
+	for _, r := range n.Rows {
+		qw.writeString("|")
+		for _, c := range r {
+			qw.write(c.Content.Nodes...)
+			qw.writeString("|")
+		}
+		qw.writeString("\n")
+	}
+}
+
 
 func (qw *qwiklabsWriter) infobox(n *types.InfoboxNode) {
 	// Note: There is no defined mapping of a Codelabs info box to any default
