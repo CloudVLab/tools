@@ -15,6 +15,7 @@
 package render
 
 import (
+	"fmt"
 	"bytes"
 	"io"
 	"path"
@@ -59,6 +60,10 @@ func (qw *qwiklabsWriter) writeBytes(b []byte) {
 
 func (qw *qwiklabsWriter) writeString(s string) {
 	qw.writeBytes([]byte(s))
+}
+
+func (qw *qwiklabsWriter) writeFmt(f string, a ...interface{}) {
+	qw.writeString(fmt.Sprintf(f, a...))
 }
 
 func (qw *qwiklabsWriter) writeEscape(s string) {
@@ -230,15 +235,23 @@ func (qw *qwiklabsWriter) itemsList(n *types.ItemsListNode) {
 }
 
 func (qw *qwiklabsWriter) grid(n *types.GridNode) {
+	// Note: There is no defined mapping of a google doc table to any default
+	//   Markdown syntax. We have decided to mix raw HTML into our Qwiklabs
+	//   Markdown documents.
+	// TODO: Extend the Markdown syntax more rigorously.
 	qw.newBlock()
+	qw.writeString("<table>\n")
 	for _, r := range n.Rows {
-		qw.writeString("|")
+		qw.writeString("<tr>")
 		for _, c := range r {
-			qw.write(c.Content.Nodes...)
-			qw.writeString("|")
+			qw.writeFmt(`<td colspan="%d" rowspan="%d">`, c.Colspan, c.Rowspan)
+			// Use the existing HTML writer to transform the infobox body content.
+			WriteHTML(qw.w, qw.env, c.Content.Nodes...)
+			qw.writeString("</td>")
 		}
-		qw.writeString("\n")
+		qw.writeString("</tr>\n")
 	}
+	qw.writeString("</table>")
 }
 
 
@@ -246,21 +259,16 @@ func (qw *qwiklabsWriter) infobox(n *types.InfoboxNode) {
 	// Note: There is no defined mapping of a Codelabs info box to any default
 	//   Markdown syntax. We have decided to mix raw HTML into our Qwiklabs
 	//   Markdown documents.
-	// Future work: We may choose to extend the Markdown syntax more rigorously.
+	// TODO: Extend the Markdown syntax more rigorously.
 	qw.newBlock()
 	qw.writeString(`<div class="codelabs-infobox codelabs-infobox-`)
 	qw.writeEscape(string(n.Kind))
 	qw.writeString(`">`)
 
-	// Take advantage of the existing HTML writer to transform
-	// the body of thi infobox.
+	// Use the existing HTML writer to transform the infobox body content.
 	WriteHTML(qw.w, qw.env, n.Content.Nodes...)
 
 	qw.writeString("</div>")
-
-	// Alternatively we could use the HTML renderers output for the whole node
-	// not just its contents.
-	//WriteHTML(qw.w, qw.env, n)
 }
 
 func (qw *qwiklabsWriter) header(n *types.HeaderNode) {
