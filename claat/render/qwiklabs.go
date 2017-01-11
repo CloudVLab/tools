@@ -104,7 +104,11 @@ func (qw *qwiklabsWriter) write(nodes ...types.Node) error {
 		case *types.URLNode:
 			qw.url(n)
 		case *types.ButtonNode:
-			qw.write(n.Content.Nodes...)
+			// This can only be called directly when the button has no URL. The parser
+			// wraps all buttons with URLs in a URLNode, which `qw.url(...)` will
+			// handle directly.
+			// WARNING: Currently, a button without a URL is not well specified behavior.
+			qw.button(n, "")
 		case *types.CodeNode:
 			qw.code(n)
 		case *types.ListNode:
@@ -166,6 +170,18 @@ func (qw *qwiklabsWriter) image(n *types.ImageNode) {
 }
 
 func (qw *qwiklabsWriter) url(n *types.URLNode) {
+	// TODO: This code is bending over backwards to handle URLNodes that
+	//  contain a ButtonNode. The gdoc parser will do this for all ButtonNodes
+	//  it finds in a document, which makes sense for the HTML renderer, but
+	//  adds complexity to any Markdown rendering format... which is probably
+	//  the right trade-off choice since Markdown has no concept of buttons.
+	for _, cn := range n.Content.Nodes {
+		if childButton, ok := cn.(*types.ButtonNode); ok {
+			qw.button(childButton, n.URL)
+			return
+		}
+	}
+
 	qw.space()
 	if n.URL != "" {
 		qw.writeString("[")
@@ -180,6 +196,25 @@ func (qw *qwiklabsWriter) url(n *types.URLNode) {
 		qw.writeString(n.URL)
 		qw.writeString(")")
 	}
+}
+
+func (qw *qwiklabsWriter) button(n *types.ButtonNode, url string) {
+	// TODO: Figure out how Qwiklabs can best display this as an actual
+	//  button instead of just a normal markdown link.
+	if url == "" {
+		url = "#"
+	}
+
+	qw.space()
+	qw.writeString("[")
+	for _, cn := range n.Content.Nodes {
+		if t, ok := cn.(*types.TextNode); ok {
+			qw.writeString(t.Value)
+		}
+	}
+	qw.writeString("](")
+	qw.writeString(url)
+	qw.writeString(")")
 }
 
 func (qw *qwiklabsWriter) code(n *types.CodeNode) {
