@@ -199,22 +199,18 @@ func (qw *qwiklabsWriter) url(n *types.URLNode) {
 }
 
 func (qw *qwiklabsWriter) button(n *types.ButtonNode, url string) {
-	// TODO: Figure out how Qwiklabs can best display this as an actual
-	//  button instead of just a normal markdown link.
 	if url == "" {
 		url = "#"
 	}
 
 	qw.space()
-	qw.writeString("[")
+	qw.writeFmt("<a class=\"codelabs-downloadbutton\" href=\"%s\" target=\"_blank\">", url)
 	for _, cn := range n.Content.Nodes {
 		if t, ok := cn.(*types.TextNode); ok {
 			qw.writeString(t.Value)
 		}
 	}
-	qw.writeString("](")
-	qw.writeString(url)
-	qw.writeString(")")
+	qw.writeString("</a>")
 }
 
 func (qw *qwiklabsWriter) code(n *types.CodeNode) {
