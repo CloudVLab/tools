@@ -215,6 +215,7 @@ func (qw *qwiklabsWriter) button(n *types.ButtonNode, url string) {
 
 func (qw *qwiklabsWriter) code(n *types.CodeNode) {
 	qw.newBlock()
+	qw.writeBytes(newLine)
 	defer qw.writeBytes(newLine)
 	if n.Term {
 		var buf bytes.Buffer
