@@ -305,7 +305,11 @@ func (qw *qwiklabsWriter) infobox(n *types.InfoboxNode) {
 
 func (qw *qwiklabsWriter) header(n *types.HeaderNode) {
 	qw.newBlock()
-	qw.writeString(strings.Repeat("#", n.Level+1))
+	// This used to be `n.Level+1` so h1 => "##", this makes sense because the
+	// lab's title is rendered as a "#", so everything else shifts down one.
+	// That scheme makes more sense, then having h1's map to the same level as the
+	// title, but we need this match the style guide from existing AWS labs... ugh
+	qw.writeString(strings.Repeat("#", n.Level))
 	qw.writeString(" ")
 	qw.write(n.Content.Nodes...)
 	if !qw.lineStart {
