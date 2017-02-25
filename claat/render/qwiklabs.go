@@ -217,22 +217,17 @@ func (qw *qwiklabsWriter) code(n *types.CodeNode) {
 	qw.newBlock()
 	qw.writeBytes(newLine)
 	defer qw.writeBytes(newLine)
+
+	lang := n.Lang
 	if n.Term {
-		var buf bytes.Buffer
-		const prefix = "    "
-		lineStart := true
-		for _, r := range n.Value {
-			if lineStart {
-				buf.WriteString(prefix)
-			}
-			buf.WriteRune(r)
-			lineStart = r == '\n'
-		}
-		qw.writeBytes(buf.Bytes())
-		return
+		lang = "bash"
 	}
+
+	// TODO: There used to be a distinction between terminal commands and
+	//   other code blocks. Terminal used the indented format.
+
 	qw.writeString("```")
-	qw.writeString(n.Lang)
+	qw.writeString(lang)
 	qw.writeBytes(newLine)
 	qw.writeString(n.Value)
 	if !qw.lineStart {
