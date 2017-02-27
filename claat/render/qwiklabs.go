@@ -143,7 +143,7 @@ func (qw *qwiklabsWriter) text(n *types.TextNode) {
 		qw.writeString("__")
 	}
 	if n.Italic {
-		qw.writeString(" *")
+		qw.writeString("*")
 	}
 	if n.Code {
 		qw.writeString("`")
@@ -153,7 +153,7 @@ func (qw *qwiklabsWriter) text(n *types.TextNode) {
 		qw.writeString("`")
 	}
 	if n.Italic {
-		qw.writeString("* ")
+		qw.writeString("*")
 	}
 	if n.Bold {
 		qw.writeString("__")
@@ -300,9 +300,9 @@ func (qw *qwiklabsWriter) infobox(n *types.InfoboxNode) {
 
 func (qw *qwiklabsWriter) header(n *types.HeaderNode) {
 	qw.newBlock()
-	// This used to be `n.Level+1` so h1 => "##", this makes sense because the
+	// This used to be `n.Level+1` so H1 => "##", this makes sense because the
 	// lab's title is rendered as a "#", so everything else shifts down one.
-	// That scheme makes more sense, then having h1's map to the same level as the
+	// That scheme makes more sense than having H1s map to the same level as the
 	// title, but we need this match the style guide from existing AWS labs... ugh
 	qw.writeString(strings.Repeat("#", n.Level))
 	qw.writeString(" ")
