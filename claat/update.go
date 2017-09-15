@@ -26,7 +26,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/googlecodelabs/tools/claat/types"
+	"github.com/CloudVLab/tools/claat/types"
 )
 
 // cmdUpdate is the "claat update ..." subcommand.

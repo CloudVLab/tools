@@ -29,8 +29,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/googlecodelabs/tools/claat/parser"
-	"github.com/googlecodelabs/tools/claat/types"
+	"github.com/CloudVLab/tools/claat/parser"
+	"github.com/CloudVLab/tools/claat/types"
 )
 
 const (

@@ -19,7 +19,7 @@ The binaries are available at
 
 Alternatively, if you have Go installed and `GOPATH` set properly:
 
-    go get github.com/googlecodelabs/tools/claat
+    go get github.com/CloudVLab/tools/claat
 
 If none of the above works, compile the tool from source following Dev workflow
 instructions below.
@@ -30,7 +30,7 @@ instructions below.
 
 1. Install [Go](https://golang.org/dl/) if you don't have it.
 2. Make sure this directory is placed under
-   `$GOPATH/src/github.com/googlecodelabs/tools`.
+   `$GOPATH/src/github.com/CloudVLab/tools`.
 3. Install package dependencies with `go get ./...` from this directory.
 
 To build the binary run `make` or `make bin/claat`. The latter creates the target binary,

@@ -23,7 +23,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/googlecodelabs/tools/claat/types"
+	"github.com/CloudVLab/tools/claat/types"
 )
 
 // TODO: render Qwiklabs HTML using golang/x/net/html or template.
@@ -31,7 +31,7 @@ import (
 // Qwiklabs renders nodes as the markup for the target env.
 func Qwiklabs(env string, nodes ...types.Node) (htmlTemplate.HTML, error) {
 	var buf bytes.Buffer
-	if err := WriteHTML(&buf, env, nodes...); err != nil {
+	if err := WriteQwiklabs(&buf, env, nodes...); err != nil {
 		return "", err
 	}
 	return htmlTemplate.HTML(buf.String()), nil

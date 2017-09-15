@@ -18,7 +18,7 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/googlecodelabs/tools/claat/types"
+	"github.com/CloudVLab/tools/claat/types"
 )
 
 // blockSquashable returns true if a node of type t can be squash in a block.

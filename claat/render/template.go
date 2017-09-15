@@ -24,7 +24,7 @@ import (
 	"sort"
 	textTemplate "text/template"
 
-	"github.com/googlecodelabs/tools/claat/types"
+	"github.com/CloudVLab/tools/claat/types"
 )
 
 // Context is a template context during execution.
@@ -105,8 +105,9 @@ var funcMap = map[string]interface{}{
 	"sanitizeId": func(s string) string {
 		// Valid HTML4 IDs start with a letter and can only contain letters, digits,
 		// and a few special symbols: https://www.w3.org/TR/html4/types.html#type-id
+		// After changing this, please make sure to update `html_service.rb#sanitize_id`.
 		re := regexp.MustCompile("[^a-zA-Z0-9_\\.:-]+")
-		return re.ReplaceAllLiteralString(s, "_")
+		return "step-" + re.ReplaceAllLiteralString(s, "_")
 	},
 }
 

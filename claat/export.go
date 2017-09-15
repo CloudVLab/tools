@@ -24,7 +24,7 @@ import (
 	"path/filepath"
 
 	"github.com/CloudVLab/tools/claat/render"
-	"github.com/googlecodelabs/tools/claat/types"
+	"github.com/CloudVLab/tools/claat/types"
 )
 
 // cmdExport is the "claat export ..." subcommand.
