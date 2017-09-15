@@ -197,7 +197,7 @@ func fetchDriveFile(id string, nometa bool) (*resource, error) {
 		return &resource{body: res.Body, typ: srcGoogleDoc}, nil
 	}
 
-	u := fmt.Sprintf("%s/files/%s?fields=id,mimeType,modifiedTime", driveAPI, id)
+	u := fmt.Sprintf("%s/files/%s?fields=id,mimeType,modifiedTime&supportsTeamDrives=true", driveAPI, id)
 	res, err := retryGet(client, u, 7)
 	if err != nil {
 		return nil, err
