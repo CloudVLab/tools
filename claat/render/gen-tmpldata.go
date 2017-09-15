@@ -32,10 +32,10 @@ var files = map[string]struct {
 	file string
 	html bool
 }{
-	"html":    {"template.html", true},
-	"md":      {"template.md", false},
-	"offline": {"template-offline.html", true},
-	"qwiklabs": {"template-qwiklabs.md", false},
+	"html":     {"template.html", true},
+	"md":       {"template.md", false},
+	"offline":  {"template-offline.html", true},
+	"qwiklabs": {"template-qwiklabs.html", true},
 }
 
 func main() {

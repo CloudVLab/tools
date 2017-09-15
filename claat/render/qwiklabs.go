@@ -15,72 +15,38 @@
 package render
 
 import (
-	"fmt"
 	"bytes"
+	"fmt"
+	htmlTemplate "html/template"
 	"io"
-	"path"
 	"sort"
 	"strconv"
 	"strings"
 
 	"github.com/googlecodelabs/tools/claat/types"
-	htmlTemplate "html/template"
 )
 
-// MD renders nodes as markdown for the target env.
-func Qwiklabs(env string, nodes ...types.Node) (string, error) {
+// TODO: render Qwiklabs HTML using golang/x/net/html or template.
+
+// Qwiklabs renders nodes as the markup for the target env.
+func Qwiklabs(env string, nodes ...types.Node) (htmlTemplate.HTML, error) {
 	var buf bytes.Buffer
-	if err := WriteQwiklabs(&buf, env, nodes...); err != nil {
+	if err := WriteHTML(&buf, env, nodes...); err != nil {
 		return "", err
 	}
-	return buf.String(), nil
+	return htmlTemplate.HTML(buf.String()), nil
 }
 
-// WriteMD does the same as MD but outputs rendered markup to w.
+// WriteQwiklabs does the same as Qwiklabs but outputs rendered markup to w.
 func WriteQwiklabs(w io.Writer, env string, nodes ...types.Node) error {
 	qw := qwiklabsWriter{w: w, env: env}
 	return qw.write(nodes...)
 }
 
 type qwiklabsWriter struct {
-	w         io.Writer // output writer
-	env       string    // target environment
-	err       error     // error during any writeXxx methods
-	lineStart bool
-}
-
-
-func (qw *qwiklabsWriter) writeBytes(b []byte) {
-	if qw.err != nil {
-		return
-	}
-	qw.lineStart = len(b) > 0 && b[len(b)-1] == '\n'
-	_, qw.err = qw.w.Write(b)
-}
-
-func (qw *qwiklabsWriter) writeString(s string) {
-	qw.writeBytes([]byte(s))
-}
-
-func (qw *qwiklabsWriter) writeFmt(f string, a ...interface{}) {
-	qw.writeString(fmt.Sprintf(f, a...))
-}
-
-func (qw *qwiklabsWriter) writeEscape(s string) {
-	htmlTemplate.HTMLEscape(qw.w, []byte(s))
-}
-
-func (qw *qwiklabsWriter) space() {
-	if !qw.lineStart {
-		qw.writeString(" ")
-	}
-}
-
-func (qw *qwiklabsWriter) newBlock() {
-	if !qw.lineStart {
-		qw.writeBytes(newLine)
-	}
-	qw.writeBytes(newLine)
+	w   io.Writer // output writer
+	env string    // target environment
+	err error     // error during any writeXxx methods
 }
 
 func (qw *qwiklabsWriter) matchEnv(v []string) bool {
@@ -104,32 +70,37 @@ func (qw *qwiklabsWriter) write(nodes ...types.Node) error {
 		case *types.URLNode:
 			qw.url(n)
 		case *types.ButtonNode:
-			// This can only be called directly when the button has no URL. The parser
-			// wraps all buttons with URLs in a URLNode, which `qw.url(...)` will
-			// handle directly.
-			// WARNING: Currently, a button without a URL is not well specified behavior.
-			qw.button(n, "")
+			qw.button(n)
 		case *types.CodeNode:
 			qw.code(n)
+			qw.writeBytes(newLine)
 		case *types.ListNode:
 			qw.list(n)
+			qw.writeBytes(newLine)
 		case *types.ImportNode:
 			if len(n.Content.Nodes) == 0 {
 				break
 			}
-			qw.write(n.Content.Nodes...)
+			qw.list(n.Content)
+			qw.writeBytes(newLine)
 		case *types.ItemsListNode:
 			qw.itemsList(n)
+			qw.writeBytes(newLine)
 		case *types.GridNode:
 			qw.grid(n)
+			qw.writeBytes(newLine)
 		case *types.InfoboxNode:
 			qw.infobox(n)
-		//case *types.SurveyNode:
-		//	qw.survey(n)
+			qw.writeBytes(newLine)
+		case *types.SurveyNode:
+			qw.survey(n)
+			qw.writeBytes(newLine)
 		case *types.HeaderNode:
 			qw.header(n)
-		//case *types.YouTubeNode:
-		//	qw.youtube(n)
+			qw.writeBytes(newLine)
+		case *types.YouTubeNode:
+			qw.youtube(n)
+			qw.writeBytes(newLine)
 		}
 		if qw.err != nil {
 			return qw.err
@@ -138,142 +109,167 @@ func (qw *qwiklabsWriter) write(nodes ...types.Node) error {
 	return nil
 }
 
+func (qw *qwiklabsWriter) writeBytes(b []byte) {
+	if qw.err != nil {
+		return
+	}
+	_, qw.err = qw.w.Write(b)
+}
+
+func (qw *qwiklabsWriter) writeString(s string) {
+	qw.writeBytes([]byte(s))
+}
+
+func (qw *qwiklabsWriter) writeFmt(f string, a ...interface{}) {
+	qw.writeString(fmt.Sprintf(f, a...))
+}
+
+func (qw *qwiklabsWriter) writeEscape(s string) {
+	htmlTemplate.HTMLEscape(qw.w, []byte(s))
+}
+
 func (qw *qwiklabsWriter) text(n *types.TextNode) {
 	if n.Bold {
-		qw.writeString("__")
+		qw.writeString("<strong>")
 	}
 	if n.Italic {
-		qw.writeString("*")
+		qw.writeString("<em>")
 	}
 	if n.Code {
-		qw.writeString("`")
+		qw.writeString("<code>")
 	}
-	qw.writeString(n.Value)
+	s := htmlTemplate.HTMLEscapeString(n.Value)
+	qw.writeString(strings.Replace(s, "\n", "<br>", -1))
 	if n.Code {
-		qw.writeString("`")
+		qw.writeString("</code>")
 	}
 	if n.Italic {
-		qw.writeString("*")
+		qw.writeString("</em>")
 	}
 	if n.Bold {
-		qw.writeString("__")
+		qw.writeString("</strong>")
 	}
 }
 
 func (qw *qwiklabsWriter) image(n *types.ImageNode) {
-	qw.space()
-	qw.writeString("![")
-	qw.writeString(path.Base(n.Src))
-	qw.writeString("](")
+	qw.writeString("<img")
+	if n.MaxWidth > 0 {
+		qw.writeFmt(` style="max-width: %.2fpx"`, n.MaxWidth)
+	}
+	qw.writeString(` src="`)
 	qw.writeString(n.Src)
-	qw.writeString(")")
+	qw.writeBytes(doubleQuote)
+	qw.writeBytes(greaterThan)
 }
 
 func (qw *qwiklabsWriter) url(n *types.URLNode) {
-	// TODO: This code is bending over backwards to handle URLNodes that
-	//  contain a ButtonNode. The gdoc parser will do this for all ButtonNodes
-	//  it finds in a document, which makes sense for the HTML renderer, but
-	//  adds complexity to any Markdown rendering format... which is probably
-	//  the right trade-off choice since Markdown has no concept of buttons.
-	for _, cn := range n.Content.Nodes {
-		if childButton, ok := cn.(*types.ButtonNode); ok {
-			qw.button(childButton, n.URL)
-			return
-		}
-	}
-
-	qw.space()
+	qw.writeString("<a")
 	if n.URL != "" {
-		qw.writeString("[")
-	}
-	for _, cn := range n.Content.Nodes {
-		if t, ok := cn.(*types.TextNode); ok {
-			qw.writeString(t.Value)
-		}
-	}
-	if n.URL != "" {
-		qw.writeString("](")
+		qw.writeString(` href="`)
 		qw.writeString(n.URL)
-		qw.writeString(")")
+		qw.writeBytes(doubleQuote)
 	}
-}
-
-func (qw *qwiklabsWriter) button(n *types.ButtonNode, url string) {
-	if url == "" {
-		url = "#"
+	if n.Name != "" {
+		qw.writeString(` name="`)
+		qw.writeEscape(n.Name)
+		qw.writeBytes(doubleQuote)
 	}
-
-	qw.space()
-	qw.writeFmt("<a class=\"codelabs-downloadbutton\" href=\"%s\" target=\"_blank\">", url)
-	for _, cn := range n.Content.Nodes {
-		if t, ok := cn.(*types.TextNode); ok {
-			qw.writeString(t.Value)
-		}
+	if n.Target != "" {
+		qw.writeString(` target="`)
+		qw.writeEscape(n.Target)
+		qw.writeBytes(doubleQuote)
 	}
+	qw.writeBytes(greaterThan)
+	qw.write(n.Content.Nodes...)
 	qw.writeString("</a>")
 }
 
+func (qw *qwiklabsWriter) button(n *types.ButtonNode) {
+	qw.writeString("<button")
+	if n.Colored {
+		qw.writeString(` class="codelabs-downloadbutton"`)
+	}
+	if n.Raised {
+		qw.writeString(" raised")
+	}
+	qw.writeBytes(greaterThan)
+	if n.Download {
+		qw.writeString(`<i class="material-icons">file_download</i>`)
+	}
+	qw.write(n.Content.Nodes...)
+	qw.writeString("</button>")
+}
+
 func (qw *qwiklabsWriter) code(n *types.CodeNode) {
-	qw.newBlock()
-	qw.writeBytes(newLine)
-	defer qw.writeBytes(newLine)
-
-	lang := n.Lang
-	if n.Term {
-		lang = "bash"
+	qw.writeString(`<pre class="prettyprint">`)
+	if !n.Term {
+		qw.writeString("<code")
+		if n.Lang != "" {
+			qw.writeFmt(" language=%q class=%q", n.Lang, n.Lang)
+		}
+		qw.writeBytes(greaterThan)
 	}
-
-	// TODO: There used to be a distinction between terminal commands and
-	//   other code blocks. Terminal used the indented format.
-
-	qw.writeString("```")
-	qw.writeString(lang)
-	qw.writeBytes(newLine)
-	qw.writeString(n.Value)
-	if !qw.lineStart {
-		qw.writeBytes(newLine)
+	qw.writeEscape(n.Value)
+	if !n.Term {
+		qw.writeString("</code>")
 	}
-	qw.writeString("```")
+	qw.writeString("</pre>")
 }
 
 func (qw *qwiklabsWriter) list(n *types.ListNode) {
-	if n.Block() == true {
-		qw.newBlock()
+	wrap := n.Block() == true
+	if wrap {
+		qw.writeString("<p>")
 	}
 	qw.write(n.Nodes...)
-	if !qw.lineStart {
-		qw.writeBytes(newLine)
+	if wrap {
+		qw.writeString("</p>")
 	}
 }
 
 func (qw *qwiklabsWriter) itemsList(n *types.ItemsListNode) {
-	qw.newBlock()
-	for i, item := range n.Items {
-		s := "* "
-		if n.Type() == types.NodeItemsList && n.Start > 0 {
-			s = strconv.Itoa(i+n.Start) + ". "
+	tag := "ul"
+	if n.Type() == types.NodeItemsList && n.Start > 0 {
+		tag = "ol"
+	}
+	qw.writeBytes(lessThan)
+	qw.writeString(tag)
+	switch n.Type() {
+	case types.NodeItemsCheck:
+		qw.writeString(` class="checklist"`)
+	case types.NodeItemsFAQ:
+		qw.writeString(` class="faq"`)
+	default:
+		if n.ListType != "" {
+			qw.writeString(` type="`)
+			qw.writeString(n.ListType)
+			qw.writeBytes(doubleQuote)
 		}
-		qw.writeString(s)
-		qw.write(item.Nodes...)
-		if !qw.lineStart {
-			qw.writeBytes(newLine)
+		if n.Start > 0 {
+			qw.writeFmt(` start="%d"`, n.Start)
 		}
 	}
+	qw.writeBytes(greaterThan)
+	qw.writeBytes(newLine)
+
+	for _, i := range n.Items {
+		qw.writeString("<li>")
+		qw.write(i.Nodes...)
+		qw.writeString("</li>\n")
+	}
+
+	qw.writeString("</")
+	qw.writeString(tag)
+	qw.writeBytes(greaterThan)
 }
 
 func (qw *qwiklabsWriter) grid(n *types.GridNode) {
-	// Note: There is no defined mapping of a google doc table to any default
-	//   Markdown syntax. We have decided to mix raw HTML into our Qwiklabs
-	//   Markdown documents.
-	// TODO: Extend the Markdown syntax more rigorously.
-	qw.newBlock()
 	qw.writeString("<table>\n")
 	for _, r := range n.Rows {
 		qw.writeString("<tr>")
 		for _, c := range r {
 			qw.writeFmt(`<td colspan="%d" rowspan="%d">`, c.Colspan, c.Rowspan)
-			// Use the existing HTML writer to transform the infobox body content.
-			WriteHTML(qw.w, qw.env, c.Content.Nodes...)
+			qw.write(c.Content.Nodes...)
 			qw.writeString("</td>")
 		}
 		qw.writeString("</tr>\n")
@@ -281,33 +277,36 @@ func (qw *qwiklabsWriter) grid(n *types.GridNode) {
 	qw.writeString("</table>")
 }
 
-
 func (qw *qwiklabsWriter) infobox(n *types.InfoboxNode) {
-	// Note: There is no defined mapping of a Codelabs info box to any default
-	//   Markdown syntax. We have decided to mix raw HTML into our Qwiklabs
-	//   Markdown documents.
-	// TODO: Extend the Markdown syntax more rigorously.
-	qw.newBlock()
-	qw.writeString(`<div class="codelabs-infobox codelabs-infobox-`)
+	qw.writeString(`<aside class="`)
 	qw.writeEscape(string(n.Kind))
 	qw.writeString(`">`)
+	qw.write(n.Content.Nodes...)
+	qw.writeString("</aside>")
+}
 
-	// Use the existing HTML writer to transform the infobox body content.
-	WriteHTML(qw.w, qw.env, n.Content.Nodes...)
-
-	qw.writeString("</div>")
+func (qw *qwiklabsWriter) survey(n *types.SurveyNode) {
+	// We don't support surveys right now. Checkout `html.go` when we feel like
+	// adding them back.
 }
 
 func (qw *qwiklabsWriter) header(n *types.HeaderNode) {
-	qw.newBlock()
-	// This used to be `n.Level+1` so H1 => "##", this makes sense because the
-	// lab's title is rendered as a "#", so everything else shifts down one.
-	// That scheme makes more sense than having H1s map to the same level as the
-	// title, but we need this match the style guide from existing AWS labs... ugh
-	qw.writeString(strings.Repeat("#", n.Level))
-	qw.writeString(" ")
-	qw.write(n.Content.Nodes...)
-	if !qw.lineStart {
-		qw.writeBytes(newLine)
+	tag := "h" + strconv.Itoa(n.Level)
+	qw.writeBytes(lessThan)
+	qw.writeString(tag)
+	switch n.Type() {
+	case types.NodeHeaderCheck:
+		qw.writeString(` class="checklist"`)
+	case types.NodeHeaderFAQ:
+		qw.writeString(` class="faq"`)
 	}
+	qw.writeBytes(greaterThan)
+	qw.write(n.Content.Nodes...)
+	qw.writeString("</")
+	qw.writeString(tag)
+	qw.writeBytes(greaterThan)
+}
+
+func (qw *qwiklabsWriter) youtube(n *types.YouTubeNode) {
+	qw.writeFmt("<google-youtube fluid video-id=%q></google-youtube>", n.VideoID)
 }

@@ -23,7 +23,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/googlecodelabs/tools/claat/render"
+	"github.com/CloudVLab/tools/claat/render"
 	"github.com/googlecodelabs/tools/claat/types"
 )
 
@@ -134,7 +134,6 @@ func writeCodelab(dir string, clab *types.Codelab, ctx *types.Context) error {
 		Steps:    clab.Steps,
 		Extra:    extraVars,
 	}}
-
 	if ctx.Format != "offline" {
 		// Some output formats have output file extensions that differ from the
 		// format name. For instance, there are multiple flavors of Markdown
@@ -142,7 +141,7 @@ func writeCodelab(dir string, clab *types.Codelab, ctx *types.Context) error {
 		outputFormat := ctx.Format
 		switch ctx.Format {
 		case "qwiklabs":
-			outputFormat = "md"
+			outputFormat = "html"
 		}
 
 		w := os.Stdout
