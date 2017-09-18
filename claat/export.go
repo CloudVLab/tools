@@ -244,6 +244,8 @@ func imageNodes(nodes []types.Node) []*types.ImageNode {
 			imgs = append(imgs, imageNodes(n.Content.Nodes)...)
 		case *types.InfoboxNode:
 			imgs = append(imgs, imageNodes(n.Content.Nodes)...)
+		case *types.ImportNode:
+			imgs = append(imgs, imageNodes(n.Content.Nodes)...)
 		case *types.GridNode:
 			for _, r := range n.Rows {
 				for _, c := range r {
