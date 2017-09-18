@@ -4,7 +4,7 @@
   <div class="lab-step" id="{{.Title | sanitizeId }}">
     <h1>{{.Title}}</h1>
     <p><em>Duration is {{.Duration.Minutes}} min</em></p>
-    {{.Content | renderQwiklabs $.Env}}
+    {{.Content | renderQwiklabsHTML $.Env}}
   </div>
   {{end}}{{end}}
 

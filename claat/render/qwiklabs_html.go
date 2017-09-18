@@ -28,28 +28,28 @@ import (
 
 // TODO: render Qwiklabs HTML using golang/x/net/html or template.
 
-// Qwiklabs renders nodes as the markup for the target env.
-func Qwiklabs(env string, nodes ...types.Node) (htmlTemplate.HTML, error) {
+// QwiklabsHTML renders nodes as the markup for the target env.
+func QwiklabsHTML(env string, nodes ...types.Node) (htmlTemplate.HTML, error) {
 	var buf bytes.Buffer
-	if err := WriteQwiklabs(&buf, env, nodes...); err != nil {
+	if err := WriteQwiklabsHTML(&buf, env, nodes...); err != nil {
 		return "", err
 	}
 	return htmlTemplate.HTML(buf.String()), nil
 }
 
-// WriteQwiklabs does the same as Qwiklabs but outputs rendered markup to w.
-func WriteQwiklabs(w io.Writer, env string, nodes ...types.Node) error {
-	qw := qwiklabsWriter{w: w, env: env}
+// WriteQwiklabsHTML does the same as Qwiklabs but outputs rendered markup to w.
+func WriteQwiklabsHTML(w io.Writer, env string, nodes ...types.Node) error {
+	qw := qwiklabsHTMLWriter{w: w, env: env}
 	return qw.write(nodes...)
 }
 
-type qwiklabsWriter struct {
+type qwiklabsHTMLWriter struct {
 	w   io.Writer // output writer
 	env string    // target environment
 	err error     // error during any writeXxx methods
 }
 
-func (qw *qwiklabsWriter) matchEnv(v []string) bool {
+func (qw *qwiklabsHTMLWriter) matchEnv(v []string) bool {
 	if len(v) == 0 || qw.env == "" {
 		return true
 	}
@@ -57,7 +57,7 @@ func (qw *qwiklabsWriter) matchEnv(v []string) bool {
 	return i < len(v) && v[i] == qw.env
 }
 
-func (qw *qwiklabsWriter) write(nodes ...types.Node) error {
+func (qw *qwiklabsHTMLWriter) write(nodes ...types.Node) error {
 	for _, n := range nodes {
 		if !qw.matchEnv(n.Env()) {
 			continue
@@ -109,26 +109,26 @@ func (qw *qwiklabsWriter) write(nodes ...types.Node) error {
 	return nil
 }
 
-func (qw *qwiklabsWriter) writeBytes(b []byte) {
+func (qw *qwiklabsHTMLWriter) writeBytes(b []byte) {
 	if qw.err != nil {
 		return
 	}
 	_, qw.err = qw.w.Write(b)
 }
 
-func (qw *qwiklabsWriter) writeString(s string) {
+func (qw *qwiklabsHTMLWriter) writeString(s string) {
 	qw.writeBytes([]byte(s))
 }
 
-func (qw *qwiklabsWriter) writeFmt(f string, a ...interface{}) {
+func (qw *qwiklabsHTMLWriter) writeFmt(f string, a ...interface{}) {
 	qw.writeString(fmt.Sprintf(f, a...))
 }
 
-func (qw *qwiklabsWriter) writeEscape(s string) {
+func (qw *qwiklabsHTMLWriter) writeEscape(s string) {
 	htmlTemplate.HTMLEscape(qw.w, []byte(s))
 }
 
-func (qw *qwiklabsWriter) text(n *types.TextNode) {
+func (qw *qwiklabsHTMLWriter) text(n *types.TextNode) {
 	if n.Bold {
 		qw.writeString("<strong>")
 	}
@@ -151,7 +151,7 @@ func (qw *qwiklabsWriter) text(n *types.TextNode) {
 	}
 }
 
-func (qw *qwiklabsWriter) image(n *types.ImageNode) {
+func (qw *qwiklabsHTMLWriter) image(n *types.ImageNode) {
 	qw.writeString("<img")
 	if n.MaxWidth > 0 {
 		qw.writeFmt(` style="max-width: %.2fpx"`, n.MaxWidth)
@@ -162,7 +162,7 @@ func (qw *qwiklabsWriter) image(n *types.ImageNode) {
 	qw.writeBytes(greaterThan)
 }
 
-func (qw *qwiklabsWriter) url(n *types.URLNode) {
+func (qw *qwiklabsHTMLWriter) url(n *types.URLNode) {
 	qw.writeString("<a")
 	if n.URL != "" {
 		qw.writeString(` href="`)
@@ -184,7 +184,7 @@ func (qw *qwiklabsWriter) url(n *types.URLNode) {
 	qw.writeString("</a>")
 }
 
-func (qw *qwiklabsWriter) button(n *types.ButtonNode) {
+func (qw *qwiklabsHTMLWriter) button(n *types.ButtonNode) {
 	qw.writeString("<button")
 	if n.Colored {
 		qw.writeString(` class="codelabs-downloadbutton"`)
@@ -200,7 +200,7 @@ func (qw *qwiklabsWriter) button(n *types.ButtonNode) {
 	qw.writeString("</button>")
 }
 
-func (qw *qwiklabsWriter) code(n *types.CodeNode) {
+func (qw *qwiklabsHTMLWriter) code(n *types.CodeNode) {
 	qw.writeString(`<pre class="prettyprint">`)
 	if !n.Term {
 		qw.writeString("<code")
@@ -216,7 +216,7 @@ func (qw *qwiklabsWriter) code(n *types.CodeNode) {
 	qw.writeString("</pre>")
 }
 
-func (qw *qwiklabsWriter) list(n *types.ListNode) {
+func (qw *qwiklabsHTMLWriter) list(n *types.ListNode) {
 	wrap := n.Block() == true
 	if wrap {
 		qw.writeString("<p>")
@@ -227,7 +227,7 @@ func (qw *qwiklabsWriter) list(n *types.ListNode) {
 	}
 }
 
-func (qw *qwiklabsWriter) itemsList(n *types.ItemsListNode) {
+func (qw *qwiklabsHTMLWriter) itemsList(n *types.ItemsListNode) {
 	tag := "ul"
 	if n.Type() == types.NodeItemsList && n.Start > 0 {
 		tag = "ol"
@@ -263,7 +263,7 @@ func (qw *qwiklabsWriter) itemsList(n *types.ItemsListNode) {
 	qw.writeBytes(greaterThan)
 }
 
-func (qw *qwiklabsWriter) grid(n *types.GridNode) {
+func (qw *qwiklabsHTMLWriter) grid(n *types.GridNode) {
 	qw.writeString("<table>\n")
 	for _, r := range n.Rows {
 		qw.writeString("<tr>")
@@ -277,7 +277,7 @@ func (qw *qwiklabsWriter) grid(n *types.GridNode) {
 	qw.writeString("</table>")
 }
 
-func (qw *qwiklabsWriter) infobox(n *types.InfoboxNode) {
+func (qw *qwiklabsHTMLWriter) infobox(n *types.InfoboxNode) {
 	qw.writeString(`<aside class="`)
 	qw.writeEscape(string(n.Kind))
 	qw.writeString(`">`)
@@ -285,12 +285,12 @@ func (qw *qwiklabsWriter) infobox(n *types.InfoboxNode) {
 	qw.writeString("</aside>")
 }
 
-func (qw *qwiklabsWriter) survey(n *types.SurveyNode) {
+func (qw *qwiklabsHTMLWriter) survey(n *types.SurveyNode) {
 	// We don't support surveys right now. Checkout `html.go` when we feel like
 	// adding them back.
 }
 
-func (qw *qwiklabsWriter) header(n *types.HeaderNode) {
+func (qw *qwiklabsHTMLWriter) header(n *types.HeaderNode) {
 	tag := "h" + strconv.Itoa(n.Level)
 	qw.writeBytes(lessThan)
 	qw.writeString(tag)
@@ -307,6 +307,6 @@ func (qw *qwiklabsWriter) header(n *types.HeaderNode) {
 	qw.writeBytes(greaterThan)
 }
 
-func (qw *qwiklabsWriter) youtube(n *types.YouTubeNode) {
+func (qw *qwiklabsHTMLWriter) youtube(n *types.YouTubeNode) {
 	qw.writeFmt("<google-youtube fluid video-id=%q></google-youtube>", n.VideoID)
 }
