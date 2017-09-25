@@ -24,8 +24,8 @@ import (
 
 	"golang.org/x/net/html"
 
-	"github.com/googlecodelabs/tools/claat/render"
-	"github.com/googlecodelabs/tools/claat/types"
+	"github.com/CloudVLab/tools/claat/render"
+	"github.com/CloudVLab/tools/claat/types"
 )
 
 func trimMarkupSpace(s string) string {

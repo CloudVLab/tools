@@ -20,10 +20,11 @@ import (
 	"io"
 	"io/ioutil"
 	"path/filepath"
+	"regexp"
 	"sort"
 	textTemplate "text/template"
 
-	"github.com/googlecodelabs/tools/claat/types"
+	"github.com/CloudVLab/tools/claat/types"
 )
 
 // Context is a template context during execution.
@@ -68,10 +69,11 @@ type executer interface {
 
 // funcMap are exposted to the templates.
 var funcMap = map[string]interface{}{
-	"renderLite": Lite,
-	"renderHTML": HTML,
-	"renderMD":   MD,
-	"renderQwiklabs": Qwiklabs,
+	"renderLite":         Lite,
+	"renderHTML":         HTML,
+	"renderMD":           MD,
+	"renderQwiklabsHTML": QwiklabsHTML,
+	"renderQwiklabsMD":   QwiklabsMD,
 	"matchEnv": func(tags []string, t string) bool {
 		if len(tags) == 0 || t == "" {
 			return true
@@ -100,6 +102,13 @@ var funcMap = map[string]interface{}{
 			return "index.html"
 		}
 		return fmt.Sprintf("step-%d.html", n)
+	},
+	"sanitizeId": func(s string) string {
+		// Valid HTML4 IDs start with a letter and can only contain letters, digits,
+		// and a few special symbols: https://www.w3.org/TR/html4/types.html#type-id
+		// After changing this, please make sure to update `html_service.rb#sanitize_id`.
+		re := regexp.MustCompile("[^a-zA-Z0-9_\\.:-]+")
+		return "step-" + re.ReplaceAllLiteralString(s, "_")
 	},
 }
 

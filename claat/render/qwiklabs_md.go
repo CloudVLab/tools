@@ -15,42 +15,42 @@
 package render
 
 import (
-	"fmt"
 	"bytes"
+	"fmt"
 	"io"
 	"path"
 	"sort"
 	"strconv"
 	"strings"
 
-	"github.com/googlecodelabs/tools/claat/types"
 	htmlTemplate "html/template"
+
+	"github.com/CloudVLab/tools/claat/types"
 )
 
-// MD renders nodes as markdown for the target env.
-func Qwiklabs(env string, nodes ...types.Node) (string, error) {
+// QwiklabsMD renders nodes as markdown for the target env.
+func QwiklabsMD(env string, nodes ...types.Node) (string, error) {
 	var buf bytes.Buffer
-	if err := WriteQwiklabs(&buf, env, nodes...); err != nil {
+	if err := WriteQwiklabsMD(&buf, env, nodes...); err != nil {
 		return "", err
 	}
 	return buf.String(), nil
 }
 
-// WriteMD does the same as MD but outputs rendered markup to w.
-func WriteQwiklabs(w io.Writer, env string, nodes ...types.Node) error {
-	qw := qwiklabsWriter{w: w, env: env}
+// WriteQwiklabsMD does the same as MD but outputs rendered markup to w.
+func WriteQwiklabsMD(w io.Writer, env string, nodes ...types.Node) error {
+	qw := qwiklabsMDWriter{w: w, env: env}
 	return qw.write(nodes...)
 }
 
-type qwiklabsWriter struct {
+type qwiklabsMDWriter struct {
 	w         io.Writer // output writer
 	env       string    // target environment
 	err       error     // error during any writeXxx methods
 	lineStart bool
 }
 
-
-func (qw *qwiklabsWriter) writeBytes(b []byte) {
+func (qw *qwiklabsMDWriter) writeBytes(b []byte) {
 	if qw.err != nil {
 		return
 	}
@@ -58,32 +58,32 @@ func (qw *qwiklabsWriter) writeBytes(b []byte) {
 	_, qw.err = qw.w.Write(b)
 }
 
-func (qw *qwiklabsWriter) writeString(s string) {
+func (qw *qwiklabsMDWriter) writeString(s string) {
 	qw.writeBytes([]byte(s))
 }
 
-func (qw *qwiklabsWriter) writeFmt(f string, a ...interface{}) {
+func (qw *qwiklabsMDWriter) writeFmt(f string, a ...interface{}) {
 	qw.writeString(fmt.Sprintf(f, a...))
 }
 
-func (qw *qwiklabsWriter) writeEscape(s string) {
+func (qw *qwiklabsMDWriter) writeEscape(s string) {
 	htmlTemplate.HTMLEscape(qw.w, []byte(s))
 }
 
-func (qw *qwiklabsWriter) space() {
+func (qw *qwiklabsMDWriter) space() {
 	if !qw.lineStart {
 		qw.writeString(" ")
 	}
 }
 
-func (qw *qwiklabsWriter) newBlock() {
+func (qw *qwiklabsMDWriter) newBlock() {
 	if !qw.lineStart {
 		qw.writeBytes(newLine)
 	}
 	qw.writeBytes(newLine)
 }
 
-func (qw *qwiklabsWriter) matchEnv(v []string) bool {
+func (qw *qwiklabsMDWriter) matchEnv(v []string) bool {
 	if len(v) == 0 || qw.env == "" {
 		return true
 	}
@@ -91,7 +91,7 @@ func (qw *qwiklabsWriter) matchEnv(v []string) bool {
 	return i < len(v) && v[i] == qw.env
 }
 
-func (qw *qwiklabsWriter) write(nodes ...types.Node) error {
+func (qw *qwiklabsMDWriter) write(nodes ...types.Node) error {
 	for _, n := range nodes {
 		if !qw.matchEnv(n.Env()) {
 			continue
@@ -128,8 +128,8 @@ func (qw *qwiklabsWriter) write(nodes ...types.Node) error {
 		//	qw.survey(n)
 		case *types.HeaderNode:
 			qw.header(n)
-		//case *types.YouTubeNode:
-		//	qw.youtube(n)
+			//case *types.YouTubeNode:
+			//	qw.youtube(n)
 		}
 		if qw.err != nil {
 			return qw.err
@@ -138,7 +138,7 @@ func (qw *qwiklabsWriter) write(nodes ...types.Node) error {
 	return nil
 }
 
-func (qw *qwiklabsWriter) text(n *types.TextNode) {
+func (qw *qwiklabsMDWriter) text(n *types.TextNode) {
 	if n.Bold {
 		qw.writeString("__")
 	}
@@ -160,7 +160,7 @@ func (qw *qwiklabsWriter) text(n *types.TextNode) {
 	}
 }
 
-func (qw *qwiklabsWriter) image(n *types.ImageNode) {
+func (qw *qwiklabsMDWriter) image(n *types.ImageNode) {
 	qw.space()
 	qw.writeString("![")
 	qw.writeString(path.Base(n.Src))
@@ -169,7 +169,7 @@ func (qw *qwiklabsWriter) image(n *types.ImageNode) {
 	qw.writeString(")")
 }
 
-func (qw *qwiklabsWriter) url(n *types.URLNode) {
+func (qw *qwiklabsMDWriter) url(n *types.URLNode) {
 	// TODO: This code is bending over backwards to handle URLNodes that
 	//  contain a ButtonNode. The gdoc parser will do this for all ButtonNodes
 	//  it finds in a document, which makes sense for the HTML renderer, but
@@ -198,7 +198,7 @@ func (qw *qwiklabsWriter) url(n *types.URLNode) {
 	}
 }
 
-func (qw *qwiklabsWriter) button(n *types.ButtonNode, url string) {
+func (qw *qwiklabsMDWriter) button(n *types.ButtonNode, url string) {
 	if url == "" {
 		url = "#"
 	}
@@ -213,7 +213,7 @@ func (qw *qwiklabsWriter) button(n *types.ButtonNode, url string) {
 	qw.writeString("</a>")
 }
 
-func (qw *qwiklabsWriter) code(n *types.CodeNode) {
+func (qw *qwiklabsMDWriter) code(n *types.CodeNode) {
 	qw.newBlock()
 	qw.writeBytes(newLine)
 	defer qw.writeBytes(newLine)
@@ -236,7 +236,7 @@ func (qw *qwiklabsWriter) code(n *types.CodeNode) {
 	qw.writeString("```")
 }
 
-func (qw *qwiklabsWriter) list(n *types.ListNode) {
+func (qw *qwiklabsMDWriter) list(n *types.ListNode) {
 	if n.Block() == true {
 		qw.newBlock()
 	}
@@ -246,7 +246,7 @@ func (qw *qwiklabsWriter) list(n *types.ListNode) {
 	}
 }
 
-func (qw *qwiklabsWriter) itemsList(n *types.ItemsListNode) {
+func (qw *qwiklabsMDWriter) itemsList(n *types.ItemsListNode) {
 	qw.newBlock()
 	for i, item := range n.Items {
 		s := "* "
@@ -261,7 +261,7 @@ func (qw *qwiklabsWriter) itemsList(n *types.ItemsListNode) {
 	}
 }
 
-func (qw *qwiklabsWriter) grid(n *types.GridNode) {
+func (qw *qwiklabsMDWriter) grid(n *types.GridNode) {
 	// Note: There is no defined mapping of a google doc table to any default
 	//   Markdown syntax. We have decided to mix raw HTML into our Qwiklabs
 	//   Markdown documents.
@@ -281,8 +281,7 @@ func (qw *qwiklabsWriter) grid(n *types.GridNode) {
 	qw.writeString("</table>")
 }
 
-
-func (qw *qwiklabsWriter) infobox(n *types.InfoboxNode) {
+func (qw *qwiklabsMDWriter) infobox(n *types.InfoboxNode) {
 	// Note: There is no defined mapping of a Codelabs info box to any default
 	//   Markdown syntax. We have decided to mix raw HTML into our Qwiklabs
 	//   Markdown documents.
@@ -298,7 +297,7 @@ func (qw *qwiklabsWriter) infobox(n *types.InfoboxNode) {
 	qw.writeString("</div>")
 }
 
-func (qw *qwiklabsWriter) header(n *types.HeaderNode) {
+func (qw *qwiklabsMDWriter) header(n *types.HeaderNode) {
 	qw.newBlock()
 	// This used to be `n.Level+1` so H1 => "##", this makes sense because the
 	// lab's title is rendered as a "#", so everything else shifts down one.

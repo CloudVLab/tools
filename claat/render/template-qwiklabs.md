@@ -4,8 +4,7 @@
 # {{.Title}}
 
 {{if .Duration}}*Duration is {{.Duration.Minutes}} min*{{end}}
-{{.Content | renderQwiklabs $.Env}}
+{{.Content | renderQwiklabsMD $.Env}}
 {{end}}{{end}}
 
 {{if .Meta.Feedback}}[Provide Feedback on this Lab]({{.Meta.Feedback}}){{end}}
-
