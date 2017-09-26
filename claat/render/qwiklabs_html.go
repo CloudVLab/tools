@@ -291,7 +291,11 @@ func (qw *qwiklabsHTMLWriter) survey(n *types.SurveyNode) {
 }
 
 func (qw *qwiklabsHTMLWriter) header(n *types.HeaderNode) {
-	tag := "h" + strconv.Itoa(n.Level)
+	// GDocs have "Title" and then "Heading {1|2|3}". We want to convert this to
+	// HTML has "Title" => "h1", "Heading 1" => "h2", and so on. Note that
+	// "Title" and "Heading 1" actually denote lab titles and step titles and are
+	// handled in `template-qwiklabs.html` and not this function.
+	tag := "h" + strconv.Itoa(n.Level+1)
 	qw.writeBytes(lessThan)
 	qw.writeString(tag)
 	switch n.Type() {
@@ -308,5 +312,6 @@ func (qw *qwiklabsHTMLWriter) header(n *types.HeaderNode) {
 }
 
 func (qw *qwiklabsHTMLWriter) youtube(n *types.YouTubeNode) {
-	qw.writeFmt("<google-youtube fluid video-id=%q></google-youtube>", n.VideoID)
+	// We don't support YT videos right now. Checkout `html.go` when we feel like
+	// adding them back.
 }
