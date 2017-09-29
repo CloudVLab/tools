@@ -1,8 +1,8 @@
 <div class="codelab">
   <h1 class="lab-title">{{.Meta.Title}}</h1>
   {{range .Steps}}{{if matchEnv .Tags $.Env}}
-  <div class="lab-step" id="{{.Title | sanitizeId }}">
-    <h2>{{.Title}}</h2>
+  <div class="lab-step">
+    <h2 id="{{.Title | sanitizeId }}">{{.Title}}</h2>
     <p><em>Duration is {{.Duration.Minutes}} min</em></p>
     {{.Content | renderQwiklabsHTML $.Env}}
   </div>
