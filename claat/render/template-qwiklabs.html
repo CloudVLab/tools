@@ -3,7 +3,9 @@
   {{range .Steps}}{{if matchEnv .Tags $.Env}}
   <div class="lab-step">
     <h2 id="{{.Title | sanitizeId }}">{{.Title}}</h2>
+    {{if .Duration.Minutes}}
     <p><em>Duration is {{.Duration.Minutes}} min</em></p>
+    {{end}}
     {{.Content | renderQwiklabsHTML $.Env}}
   </div>
   {{end}}{{end}}
