@@ -20,11 +20,11 @@ import (
 	"io"
 	"io/ioutil"
 	"path/filepath"
-	"regexp"
 	"sort"
 	textTemplate "text/template"
 
 	"github.com/CloudVLab/tools/claat/types"
+	"github.com/twinj/uuid"
 )
 
 // Context is a template context during execution.
@@ -105,10 +105,10 @@ var funcMap = map[string]interface{}{
 	},
 	"sanitizeId": func(s string) string {
 		// Valid HTML4 IDs start with a letter and can only contain letters, digits,
-		// and a few special symbols: https://www.w3.org/TR/html4/types.html#type-id
-		// After changing this, please make sure to update `html_service.rb#sanitize_id`.
-		re := regexp.MustCompile("[^a-zA-Z0-9_\\.:-]+")
-		return "step-" + re.ReplaceAllLiteralString(s, "_")
+		// and a few special symbols: https://www.w3.org/TR/html4/types.html#type-id.
+		// However, we also need to avoid naming collisions in titles with lots of
+		// non-Latin characters (e.g. Japanese) so just generate a guid as the ID.
+		return "step-" + uuid.NewV4().String()
 	},
 }
 
