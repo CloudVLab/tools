@@ -201,7 +201,12 @@ func (qw *qwiklabsHTMLWriter) button(n *types.ButtonNode) {
 }
 
 func (qw *qwiklabsHTMLWriter) code(n *types.CodeNode) {
-	qw.writeString(`<pre class="prettyprint">`)
+	// Only attempt to syntax highlight non-console codeblocks.
+	if !n.Term {
+		qw.writeString(`<pre class="prettyprint">`)
+	} else {
+		qw.writeString(`<pre>`)
+	}
 	if !n.Term {
 		qw.writeString("<code")
 		if n.Lang != "" {
