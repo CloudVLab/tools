@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"io"
 	"path"
+	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -148,7 +149,13 @@ func (qw *qwiklabsGitMDWriter) text(n *types.TextNode) {
 	if n.Code {
 		qw.writeString("`")
 	}
-	qw.writeString(n.Value)
+
+	if n.Code {
+		qw.writeString(n.Value)
+	} else {
+		qw.writeString(sanitize(n.Value))
+	}
+
 	if n.Code {
 		qw.writeString("`")
 	}
@@ -163,9 +170,9 @@ func (qw *qwiklabsGitMDWriter) text(n *types.TextNode) {
 func (qw *qwiklabsGitMDWriter) image(n *types.ImageNode) {
 	qw.space()
 	qw.writeString("![")
-	qw.writeString(path.Base(n.Src))
+	qw.writeString(sanitize(path.Base(n.Src)))
 	qw.writeString("](")
-	qw.writeString(n.Src)
+	qw.writeString(sanitize(n.Src))
 	qw.writeString(")")
 }
 
@@ -188,12 +195,12 @@ func (qw *qwiklabsGitMDWriter) url(n *types.URLNode) {
 	}
 	for _, cn := range n.Content.Nodes {
 		if t, ok := cn.(*types.TextNode); ok {
-			qw.writeString(t.Value)
+			qw.writeString(sanitize(t.Value))
 		}
 	}
 	if n.URL != "" {
 		qw.writeString("](")
-		qw.writeString(n.URL)
+		qw.writeString(sanitize(n.URL))
 		qw.writeString(")")
 	}
 }
@@ -207,7 +214,7 @@ func (qw *qwiklabsGitMDWriter) button(n *types.ButtonNode, url string) {
 	qw.writeFmt("<a class=\"codelabs-downloadbutton\" href=\"%s\" target=\"_blank\">", url)
 	for _, cn := range n.Content.Nodes {
 		if t, ok := cn.(*types.TextNode); ok {
-			qw.writeString(t.Value)
+			qw.writeString(sanitize(t.Value))
 		}
 	}
 	qw.writeString("</a>")
@@ -287,14 +294,14 @@ func (qw *qwiklabsGitMDWriter) infobox(n *types.InfoboxNode) {
 	//   Markdown documents.
 	// TODO: Extend the Markdown syntax more rigorously.
 	qw.newBlock()
-	qw.writeString(`<div class="codelabs-infobox codelabs-infobox-`)
+	qw.writeString(`<aside class="`)
 	qw.writeEscape(string(n.Kind))
 	qw.writeString(`">`)
 
 	// Use the existing HTML writer to transform the infobox body content.
 	WriteHTML(qw.w, qw.env, n.Content.Nodes...)
 
-	qw.writeString("</div>")
+	qw.writeString("</aside>")
 }
 
 func (qw *qwiklabsGitMDWriter) header(n *types.HeaderNode) {
@@ -309,4 +316,12 @@ func (qw *qwiklabsGitMDWriter) header(n *types.HeaderNode) {
 	if !qw.lineStart {
 		qw.writeBytes(newLine)
 	}
+}
+
+// sanitize makes a string appear as plaintext in Markdown. Stolen from the
+// Markdown sanitizer in Git Whisperer and relaxed a bit to favor more readable
+// Markdown at the expense of a few unescaped things sometimes bleeding through.
+func sanitize(markup string) string {
+	var escapeRe = regexp.MustCompile(`([\\\*\_\{\}\[\]\#\<\>])`)
+	return escapeRe.ReplaceAllString(markup, `\$1`)
 }
