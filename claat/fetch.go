@@ -68,13 +68,13 @@ type codelab struct {
 //
 // The function will also fetch and parse fragments included
 // with types.ImportNode.
-func slurpCodelab(src string) (*codelab, error) {
+func slurpCodelab(src string, parseFragments bool) (*codelab, error) {
 	res, err := fetch(src)
 	if err != nil {
 		return nil, err
 	}
 	defer res.body.Close()
-	clab, err := parser.Parse(string(res.typ), res.body)
+	clab, err := parser.Parse(string(res.typ), res.body, parseFragments)
 	if err != nil {
 		return nil, err
 	}
@@ -117,7 +117,7 @@ func slurpFragment(url string) ([]types.Node, error) {
 		return nil, err
 	}
 	defer res.body.Close()
-	return parser.ParseFragment(string(res.typ), res.body)
+	return parser.ParseFragment(string(res.typ), res.body, true)
 }
 
 // fetch retrieves codelab doc either from local disk

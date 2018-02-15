@@ -40,17 +40,17 @@ type Parser struct {
 }
 
 // Parse parses a codelab exported in HTML from Google Docs.
-func (p *Parser) Parse(r io.Reader) (*types.Codelab, error) {
+func (p *Parser) Parse(r io.Reader, parseImports bool) (*types.Codelab, error) {
 	// TODO: use html.Tokenizer instead
 	doc, err := html.Parse(r)
 	if err != nil {
 		return nil, err
 	}
-	return parseDoc(doc)
+	return parseDoc(doc, parseImports)
 }
 
 // ParseFragment parses a codelab fragment exported in HTML from Google Docs.
-func (p *Parser) ParseFragment(r io.Reader) ([]types.Node, error) {
+func (p *Parser) ParseFragment(r io.Reader, parseImports bool) ([]types.Node, error) {
 	// TODO: use html.Tokenizer instead
 	doc, err := html.Parse(r)
 	if err != nil {
@@ -99,6 +99,7 @@ const (
 	fSkipTable
 	fSkipInfobox
 	fSkipSurvey
+	fSkipImport
 	fMakeBold
 	fMakeItalic
 	fMakeCode
@@ -179,13 +180,13 @@ func parseFragment(doc *html.Node) ([]types.Node, error) {
 		}
 		parseTop(ds)
 	}
-	finalizeStep(ds.step)
+	finalizeStep(ds.step, ds.flags&fSkipImport == 0)
 	return ds.step.Content.Nodes, nil
 }
 
 // parseDoc parses codelab doc exported as text/html.
 // The doc must contain CSS styles and <body> as exported from Google Doc.
-func parseDoc(doc *html.Node) (*types.Codelab, error) {
+func parseDoc(doc *html.Node, parseImports bool) (*types.Codelab, error) {
 	body := findAtom(doc, atom.Body)
 	if body == nil {
 		return nil, fmt.Errorf("document without a body")
@@ -195,9 +196,15 @@ func parseDoc(doc *html.Node) (*types.Codelab, error) {
 		return nil, err
 	}
 
+	flags := stateFlag(0)
+	if !parseImports {
+		flags = fSkipImport
+	}
+
 	ds := &docState{
-		clab: &types.Codelab{},
-		css:  style,
+		clab:  &types.Codelab{},
+		css:   style,
+		flags: flags,
 	}
 	for ds.cur = body.FirstChild; ds.cur != nil; ds.cur = ds.cur.NextSibling {
 		if isComment(ds.css, ds.cur) {
@@ -226,14 +233,14 @@ func parseDoc(doc *html.Node) (*types.Codelab, error) {
 		}
 	}
 
-	finalizeStep(ds.step) // TODO: last ds.step is never finalized in newStep
+	finalizeStep(ds.step, ds.flags&fSkipImport == 0) // TODO: last ds.step is never finalized in newStep
 	ds.clab.Tags = unique(ds.clab.Tags)
 	sort.Strings(ds.clab.Tags)
 	ds.clab.Duration = int(ds.totdur.Minutes())
 	return ds.clab, nil
 }
 
-func finalizeStep(s *types.Step) {
+func finalizeStep(s *types.Step, shouldParseImports bool) {
 	if s == nil {
 		return
 	}
@@ -267,7 +274,7 @@ func finalizeStep(s *types.Step) {
 		}
 		// execute transform and replace t with the result
 		v := strings.ToLower(strings.TrimSpace(t.Value))
-		r := transformNodes(v, l.Nodes[2:len(l.Nodes)-1])
+		r := transformNodes(v, l.Nodes[2:len(l.Nodes)-1], shouldParseImports)
 		if r != nil {
 			r.MutateEnv(l.Env())
 			s.Content.Nodes[i] = r
@@ -275,8 +282,8 @@ func finalizeStep(s *types.Step) {
 	}
 }
 
-func transformNodes(name string, nodes []types.Node) types.Node {
-	if name == metaTagImport && len(nodes) == 1 {
+func transformNodes(name string, nodes []types.Node, shouldParseImports bool) types.Node {
+	if name == metaTagImport && len(nodes) == 1 && shouldParseImports {
 		u, ok := nodes[0].(*types.URLNode)
 		if !ok {
 			return nil
@@ -364,7 +371,7 @@ func newStep(ds *docState) {
 	if t == "" {
 		return
 	}
-	finalizeStep(ds.step)
+	finalizeStep(ds.step, ds.flags&fSkipImport == 0)
 	ds.step = ds.clab.NewStep(t)
 	ds.env = nil
 }

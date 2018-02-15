@@ -63,7 +63,7 @@ type Parser struct {
 }
 
 // Parse parses a codelab writtet in Markdown.
-func (p *Parser) Parse(r io.Reader) (*types.Codelab, error) {
+func (p *Parser) Parse(r io.Reader, parseFragments bool) (*types.Codelab, error) {
 	// Convert Markdown to HTML for easy parsing.
 	b, err := ioutil.ReadAll(r)
 	if err != nil {
@@ -76,7 +76,7 @@ func (p *Parser) Parse(r io.Reader) (*types.Codelab, error) {
 }
 
 // ParseFragment parses a codelab fragment writtet in Markdown.
-func (p *Parser) ParseFragment(r io.Reader) ([]types.Node, error) {
+func (p *Parser) ParseFragment(r io.Reader, parseFragments bool) ([]types.Node, error) {
 	return nil, errors.New("fragment parser not implemented")
 }
 

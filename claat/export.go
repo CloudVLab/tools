@@ -41,7 +41,7 @@ func cmdExport() {
 	ch := make(chan *result, len(args))
 	for _, src := range args {
 		go func(src string) {
-			meta, err := exportCodelab(src)
+			meta, err := exportCodelab(src, !*skipFragments)
 			ch <- &result{src, meta, err}
 		}(src)
 	}
@@ -64,8 +64,8 @@ func cmdExport() {
 // There's a special case where basedir has a value of "-", in which
 // nothing is stored on disk and the only output, codelab formatted content,
 // is printed to stdout.
-func exportCodelab(src string) (*types.Meta, error) {
-	clab, err := slurpCodelab(src)
+func exportCodelab(src string, parseFragments bool) (*types.Meta, error) {
+	clab, err := slurpCodelab(src, parseFragments)
 	if err != nil {
 		return nil, err
 	}
