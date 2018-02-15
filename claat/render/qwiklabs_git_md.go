@@ -306,11 +306,7 @@ func (qw *qwiklabsGitMDWriter) infobox(n *types.InfoboxNode) {
 
 func (qw *qwiklabsGitMDWriter) header(n *types.HeaderNode) {
 	qw.newBlock()
-	// This used to be `n.Level+1` so H1 => "##", this makes sense because the
-	// lab's title is rendered as a "#", so everything else shifts down one.
-	// That scheme makes more sense than having H1s map to the same level as the
-	// title, but we need this match the style guide from existing AWS labs... ugh
-	qw.writeString(strings.Repeat("#", n.Level))
+	qw.writeString(strings.Repeat("#", n.Level+1))
 	qw.writeString(" ")
 	qw.write(n.Content.Nodes...)
 	if !qw.lineStart {

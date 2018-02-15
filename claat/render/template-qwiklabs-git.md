@@ -1,7 +1,7 @@
 # {{.Meta.Title}}
 
 {{range .Steps}}{{if matchEnv .Tags $.Env}}
-# {{.Title}}
+## {{.Title}}
 
 {{if .Duration}}*Duration is {{.Duration.Minutes}} min*{{end}}
 {{.Content | renderQwiklabsGitMD $.Env}}
