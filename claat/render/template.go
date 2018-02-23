@@ -69,11 +69,12 @@ type executer interface {
 
 // funcMap are exposted to the templates.
 var funcMap = map[string]interface{}{
-	"renderLite":         Lite,
-	"renderHTML":         HTML,
-	"renderMD":           MD,
-	"renderQwiklabsHTML": QwiklabsHTML,
-	"renderQwiklabsMD":   QwiklabsMD,
+	"renderLite":          Lite,
+	"renderHTML":          HTML,
+	"renderMD":            MD,
+	"renderQwiklabsHTML":  QwiklabsHTML,
+	"renderQwiklabsMD":    QwiklabsMD,
+	"renderQwiklabsGitMD": QwiklabsGitMD,
 	"matchEnv": func(tags []string, t string) bool {
 		if len(tags) == 0 || t == "" {
 			return true

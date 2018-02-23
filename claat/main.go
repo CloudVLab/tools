@@ -30,15 +30,15 @@ import (
 )
 
 var (
-	authToken = flag.String("auth", "", "OAuth2 Bearer token; alternative credentials override.")
-	output    = flag.String("o", ".", "output directory or '-' for stdout")
-	expenv    = flag.String("e", "web", "codelab environment")
-	tmplout   = flag.String("f", "html", "output format")
-	prefix    = flag.String("prefix", "../../", "URL prefix for html format")
-	globalGA  = flag.String("ga", "UA-49880327-14", "global Google Analytics account")
-	extra     = flag.String("extra", "", "Additional arguments to pass to format templates. JSON object of string,string key values.")
-
-	version string // set by linker -X
+	authToken     = flag.String("auth", "", "OAuth2 Bearer token; alternative credentials override.")
+	output        = flag.String("o", ".", "output directory or '-' for stdout")
+	expenv        = flag.String("e", "web", "codelab environment")
+	tmplout       = flag.String("f", "html", "output format")
+	prefix        = flag.String("prefix", "../../", "URL prefix for html format")
+	globalGA      = flag.String("ga", "UA-49880327-14", "global Google Analytics account")
+	extra         = flag.String("extra", "", "Additional arguments to pass to format templates. JSON object of string,string key values.")
+	skipFragments = flag.Bool("skip-fragments", false, "Don't attempt to parse fragment imports.")
+	version       string // set by linker -X
 )
 
 const (

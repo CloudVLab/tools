@@ -86,7 +86,7 @@ func updateCodelab(dir string) (*types.Meta, error) {
 	}
 
 	// fetch and parse codelab source
-	clab, err := slurpCodelab(meta.Source)
+	clab, err := slurpCodelab(meta.Source, true)
 	if err != nil {
 		return nil, err
 	}
