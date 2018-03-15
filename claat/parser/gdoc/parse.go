@@ -819,6 +819,11 @@ func slug(s string) string {
 			dash = true
 		}
 	}
+
+	if buf.Len() == 0 {
+		buf.WriteString("generic-slug")
+	}
+
 	return buf.String()
 }
 
