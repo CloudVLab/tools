@@ -35,7 +35,8 @@ func QwiklabsGitMD(env string, nodes ...types.Node) (string, error) {
 	if err := WriteQwiklabsGitMD(&buf, env, nodes...); err != nil {
 		return "", err
 	}
-	return buf.String(), nil
+
+	return cleanWhitespace(buf.String()), nil
 }
 
 // WriteQwiklabsGitMD does the same as MD but outputs rendered markup to w.
@@ -312,6 +313,22 @@ func (qw *qwiklabsGitMDWriter) header(n *types.HeaderNode) {
 	if !qw.lineStart {
 		qw.writeBytes(newLine)
 	}
+}
+
+func cleanWhitespace(markup string) string {
+	// Remove trailing spaces and multiple newlines with a single newline character.
+	var trailingWhitespaceRe = regexp.MustCompile(` +\n`)
+	markup = trailingWhitespaceRe.ReplaceAllString(markup, "\n")
+
+	// Remove multiple newlines
+	var multipleNewlineRe = regexp.MustCompile(`\n\n\n`)
+	markup = multipleNewlineRe.ReplaceAllString(markup, "\n\n")
+
+	// Rewrite fragments so they look like they belong in a repo.
+	var fragmentRe = regexp.MustCompile(`\\?\[.*import.*\[ *([a-zA-Z0-9]+) *\]\(.*\)\\?\]\\?\]`)
+	markup = fragmentRe.ReplaceAllString(markup, `![[/fragments/$1]]`)
+
+	return markup
 }
 
 // sanitize makes a string appear as plaintext in Markdown. Stolen from the
