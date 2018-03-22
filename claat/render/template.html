@@ -21,12 +21,13 @@ the License.
   <meta name="theme-color" content="#4F7DC9">
   <meta charset="UTF-8">
   <title>{{.Meta.Title}}</title>
-  <script src="{{.Prefix}}bower_components/webcomponentsjs/webcomponents-lite.min.js"></script>
+  <script src="{{.Prefix}}bower_components/webcomponentsjs/webcomponents-lite.js"></script>
   <link rel="import" href="{{.Prefix}}elements/codelab.html">
   <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Source+Code+Pro:400|Roboto:400,300,400italic,500,700|Roboto+Mono">
-  <style>
+  <style is="custom-style">
     body {
       font-family: "Roboto",sans-serif;
+      background: var(--google-codelab-background, #F8F9FA);
     }
   </style>
   <!-- TODO: add theming
